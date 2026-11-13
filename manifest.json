@@ -1,0 +1,18 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "ProfitNuro",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "ProfitNuro",
+  "start_url": "/",
+  "theme_color": "#0f172a",
+  "description": "Calculate profit, loss and margin easily. Best profit calculator for shopkeepers and business owners.",
+  "lang": "en",
+  "categories": [
+    "business",
+    "finance",
+    "productivity"
+  ]
+}
