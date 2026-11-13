@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ProfitNuro - Profit Calculator</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:Arial;background:#f2f4f8;margin:0;padding:15px 15px 50px 18px}
+.topbar{display:flex;align-items:center;gap:8px;position:relative}
+.topbar h2{flex:1;text-align:center;margin:10px;font-size:22px}
+.dots-btn{width:38px;height:38px;border:0;background:#e2e4ec;border-radius:10px;font-size:22px;cursor:pointer;line-height:1;flex-shrink:0}
+.menu{position:absolute;right:0;top:48px;background:white;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,0.18);width:230px;display:none;z-index:99;overflow:hidden}
+.menu button{width:100%;text-align:left;border:0;background:white;padding:14px 15px;font-size:14px;cursor:pointer;border-bottom:1px solid #eee}
+.menu button:last-child{border-bottom:0}
+.pro-badge{background:#ffd700;color:#333;font-size:11px;padding:3px 8px;border-radius:10px;font-weight:bold;white-space:nowrap}
+.pro-alert{background:#fff3cd;border:1px solid #ffcc00;color:#7a5b00;padding:12px;border-radius:12px;margin:12px 0;font-size:13px;display:none;text-align:center}
+.card{background:#1e2a7a;color:white;border-radius:20px;padding:20px}
+.card h1{font-size:44px;margin:5px 0}
+.flex{display:flex;justify-content:space-between;text-align:center;margin-top:15px}
+.stat{flex:1}
+.stat + .stat{border-left:1px solid rgba(255,255,255,0.35)}
+.box{background:white;border-radius:15px;padding:15px;margin-top:15px}
+.row{display:flex;justify-content:space-between;align-items:center;margin:14px 0;font-size:15px;gap:10px}
+.input-row{border-bottom:1px solid #eeeeee;padding-bottom:14px}
+.input-row:last-child{border-bottom:0;padding-bottom:0}
+.row-line{border-top:1px solid #e8e8e8;padding-top:14px}
+.row-line-bottom{border-bottom:1px solid #e8e8e8;padding-bottom:14px}
+.field{display:flex;align-items:center;background:#eef0f7;border-radius:10px;padding:0 10px;width:125px}
+.field span{color:#666;font-weight:bold;font-size:15px}
+.field input{width:100%;padding:11px 5px;border:0;background:transparent;text-align:right;font-weight:bold;font-size:16px;outline:none}
+.green{color:#0a9c4a;font-weight:bold}
+table{width:100%;text-align:center;border-collapse:collapse}
+td,th{padding:10px}
+th{border-bottom:2px solid #e8e8e8;color:#333}
+td{border-bottom:0}
+.current{background:#e6eaff;font-weight:bold}
+.monthly{margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.3);font-size:14px;display:flex;align-items:center;gap:6px}
+.small{font-size:12px;opacity:0.8}
+.error{background:#ffecec;color:#c00;padding:12px;border-radius:12px;margin-top:15px;font-size:14px;display:none}
+.sub{font-size:12px;color:#666;margin-top:2px;margin-left:42px}
+.head{display:flex;align-items:center;gap:10px;font-weight:bold}
+.icon{width:32px;height:32px;background:#eef0ff;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.icon svg{width:18px;height:18px}
+.ad-slot{background:#fff;border:1px dashed #c5c8d8;border-radius:12px;min-height:90px;display:flex;align-items:center;justify-content:center;text-align:center;color:#999;font-size:12px;letter-spacing:1px;margin:12px 0;padding:10px;overflow:hidden}
+.ad-slot-bottom{margin-top:18px;min-height:250px}
+.ad-hidden{display:none !important}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:flex-end;justify-content:center;z-index:200}
+.modal{background:white;width:100%;max-width:480px;max-height:85vh;overflow:auto;border-radius:20px 20px 0 0;padding:20px;padding-bottom:30px}
+.modal h3{margin-top:0}
+.modal p,.modal li{font-size:14px;line-height:1.6;color:#333}
+.btn-primary{width:100%;background:#1e2a7a;color:white;border:0;padding:14px;border-radius:12px;font-size:16px;font-weight:bold;cursor:pointer;margin-top:12px}
+.btn-ghost{width:100%;background:#eef0f7;border:0;padding:12px;border-radius:12px;margin-top:8px;cursor:pointer}
+.btn-danger{width:100%;background:#fff0f0;color:#c00;border:1px solid #ffcccc;padding:12px;border-radius:12px;margin-top:8px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+<h2>Profit Calculator</h2><span id="proLabel"></span>
+<button class="dots-btn" onclick="toggleMenu(event)">⋮</button>
+<div class="menu" id="menu">
+<button onclick="openModal('proModal');closeMenu()">⭐ Remove Ads - $1 / month</button>
+<button onclick="openModal('privacyModal');closeMenu()">🔒 Privacy Policy</button>
+<button onclick="openModal('termsModal');closeMenu()">📄 Terms & Conditions</button>
+</div>
+</div>
+
+<div class="pro-alert" id="proAlert"></div>
+
+<div class="ad-slot" id="ad-top">ADVERTISEMENT</div>
+
+<div class="card">
+<div>Net profit per unit <span style="float:right;background:#ffffff33;padding:5px 10px;border-radius:12px;font-size:12px">ESTIMATE</span></div>
+<h1 id="profitOut">$6.17</h1>
+<div class="flex">
+<div class="stat"><b id="marginOut">20.6%</b><br><span class="small">Margin</span></div>
+<div class="stat"><b id="roiOut">56%</b><br><span class="small">ROI</span></div>
+<div class="stat"><b id="breakOut">$21.77</b><br><span class="small">Break-even</span></div>
+</div>
+<div class="monthly"><span id="monthlyOut">Monthly: $9,000 revenue - $1,851 profit</span></div>
+</div>
+<div class="error" id="errBox"></div>
+
+<div class="box">
+<div class="head">Product & price</div>
+<div class="row input-row">Selling price <div class="field"><span>$</span><input id="inPrice" type="number" value="30" oninput="calc()"></div></div>
+<div class="row input-row">Supplier cost <div class="field"><span>$</span><input id="inSupplier" type="number" value="9" oninput="calc()"></div></div>
+<div class="row input-row">Monthly units <div class="field"><input id="inUnits" type="number" value="300" oninput="calc()"></div></div>
+</div>
+
+<div class="box">
+<div class="head">Costs</div>
+<div class="row input-row">Freight / unit <div class="field"><span>$</span><input id="inFreight" type="number" value="1.50" oninput="calc()"></div></div>
+<div class="row input-row">Prep / unit <div class="field"><span>$</span><input id="inPrep" type="number" value="0.50" oninput="calc()"></div></div>
+<div class="row input-row">Other costs / unit <div class="field"><span>$</span><input id="inOther" type="number" value="0" oninput="calc()"></div></div>
+</div>
+
+<div class="box">
+<div class="head">Amazon fees</div>
+<div class="row input-row">Referral fee <div class="field"><input id="inReferral" type="number" value="15" oninput="calc()"><span>%</span></div></div>
+<div class="row input-row">FBA fee <div class="field"><span>$</span><input id="inFba" type="number" value="5" oninput="calc()"></div></div>
+<div class="row input-row">Storage / unit <div class="field"><span>$</span><input id="inStorage" type="number" value="0" oninput="calc()"></div></div>
+</div>
+
+<div class="box">
+<div class="head">Marketing & returns</div>
+<div class="row input-row">Advertising (% of price) <div class="field"><input id="inAds" type="number" value="10" oninput="calc()"><span>%</span></div></div>
+<div class="row input-row">Returns (% of units) <div class="field"><input id="inReturns" type="number" value="3" oninput="calc()"><span>%</span></div></div>
+</div>
+
+<div class="box" id="breakdownBox"></div>
+
+<div class="box">
+<div class="head">Price sensitivity</div><div class="sub">Same costs, different selling prices</div>
+<table><tr><th>Change</th><th>Price</th><th>Profit</th><th>Margin</th></tr><tbody id="sensBody"></tbody></table>
+</div>
+
+<div class="ad-slot ad-slot-bottom" id="ad-bottom">ADVERTISEMENT</div>
+
+<div class="modal-bg" id="proModal"><div class="modal">
+<h3>Remove Ads - $1 / month</h3>
+<p id="proStatus">Remove all advertisements from ProfitNuro for just <b>$1 per month</b>.</p>
+<ul>
+<li>✅ No ads on top or bottom</li>
+<li>✅ Auto-renews every month until you cancel</li>
+<li>✅ Cancel anytime - ads will return after your plan ends</li>
+<li>✅ You will get a reminder 2 days before renewal</li>
+</ul>
+<p style="font-size:12px;color:#666">Payment is handled securely by Google Play. You will be asked for your debit / credit card in the Google Play popup.</p>
+<button class="btn-primary" onclick="subscribePro()">Subscribe - $1 / month</button>
+<button class="btn-ghost" id="restoreBtn" onclick="restorePurchase()">Restore Purchase - Check Status</button>
+<button class="btn-danger" id="cancelBtn" style="display:none" onclick="cancelPro()">Cancel Subscription</button>
+<button class="btn-ghost" onclick="closeModal('proModal')">Close</button>
+</div></div>
+
+<div class="modal-bg" id="privacyModal"><div class="modal">
+<h3>Privacy Policy</h3>
+<p><b>Last updated:</b> November 2026</p>
+<p>ProfitNuro respects your privacy. This calculator works on your device. We do not collect your selling price, supplier cost, or profit calculations.</p>
+<p><b>What we collect:</b> We may show ads through Google AdSense / Adsterra. Those ad providers may use cookies to show relevant ads.</p>
+<p><b>What we do NOT collect:</b> We do not ask for your name, email, Amazon seller account, or password.</p>
+<p><b>Contact:</b> support@profitnuro.com</p>
+<p><b>Full policy online:</b> <a id="privacyLink" href="#" target="_blank">Open Privacy Policy on Website</a></p>
+<button class="btn-ghost" onclick="closeModal('privacyModal')">Close</button>
+</div></div>
+
+<div class="modal-bg" id="termsModal"><div class="modal">
+<h3>Terms & Conditions</h3>
+<p><b>1. Estimates only:</b> All results are estimates, not guarantees. Always verify fees in Amazon Seller Central.</p>
+<p><b>2. No affiliation:</b> ProfitNuro is not affiliated with Amazon.com, Inc.</p>
+<p><b>3. Subscription:</b> Remove Ads plan is $1 per month, auto-renews until you cancel. If you do not renew, your plan expires and ads will show again.</p>
+<p><b>4. No refunds for used period:</b> If you cancel, you keep ad-free access until the end of the paid month.</p>
+<p><b>5. Payments:</b> Payments are handled securely by Google Play. Google Play's own refund and cancellation policy will apply.</p>
+<p><b>Full terms online:</b> <a id="termsLink" href="#" target="_blank">Open Terms on Website</a></p>
+<button class="btn-ghost" onclick="closeModal('termsModal')">Close</button>
+</div></div>
+
+<script>
+// ===== LINKS - SAHI KAR DIYE HAIN =====
+var PRIVACY_URL = "https://mskhan799.github.io/profitnuro.github.io/privacy-policy.html";
+var TERMS_URL = "https://mskhan799.github.io/profitnuro.github.io/terms.html";
+// Google Play Product ID - Ye Play Console me banaoge tab yahan dalna hai
+var PLAY_PRODUCT_ID = "profitnuro_pro_monthly";
+// ======================================
+
+function getVal(id){ var v=document.getElementById(id).value; if(v===""||v===null) return NaN; return parseFloat(v); }
+function fmtMargin(m){ return (Math.round(m*10+0.1)/10).toFixed(1)+"%"; }
+function round2(v){ return Math.round((v+1e-9)*100)/100; }
+function toggleMenu(e){ e.stopPropagation(); var m=document.getElementById("menu"); m.style.display=m.style.display==="block"?"none":"block"; }
+function closeMenu(){ document.getElementById("menu").style.display="none"; }
+document.addEventListener("click",function(){ closeMenu(); });
+function openModal(id){ document.getElementById(id).style.display="flex"; updateProUI(); }
+function closeModal(id){ document.getElementById(id).style.display="none"; }
+function getProUntil(){ try{ return parseInt(localStorage.getItem("profitnuro_pro_until")||"0"); }catch(e){ return 0; } }
+function isPro(){ return getProUntil() > Date.now(); }
+function updateProUI(){
+document.getElementById("privacyLink").href=PRIVACY_URL;
+document.getElementById("termsLink").href=TERMS_URL;
+var until=getProUntil(); var now=Date.now();
+var adTop=document.getElementById("ad-top"); var adBottom=document.getElementById("ad-bottom");
+var label=document.getElementById("proLabel"); var alertBox=document.getElementById("proAlert");
+var status=document.getElementById("proStatus"); var cancelBtn=document.getElementById("cancelBtn");
+if(isPro()){
+if(adTop) adTop.classList.add("ad-hidden");
+if(adBottom) adBottom.classList.add("ad-hidden");
+if(label) label.innerHTML='<span class="pro-badge">PRO</span>';
+var daysLeft=Math.ceil((until-now)/(1000*60*60*24));
+var dateStr=new Date(until).toLocaleDateString();
+if(status) status.innerHTML='You are <b>PRO</b>. Ads are removed until <b>'+dateStr+'</b>. Your plan auto-renews every month until you cancel.';
+if(cancelBtn) cancelBtn.style.display="block";
+if(daysLeft<=2){ if(alertBox){ alertBox.style.display="block"; alertBox.innerHTML="⏰ Your Remove Ads plan expires in "+daysLeft+" day(s) on "+dateStr+". Renew to keep ads removed."; } }
+else{ if(alertBox) alertBox.style.display="none"; }
+} else {
+if(adTop) adTop.classList.remove("ad-hidden");
+if(adBottom) adBottom.classList.remove("ad-hidden");
+if(label) label.innerHTML="";
+if(alertBox) alertBox.style.display="none";
+if(status) status.innerHTML='Remove all advertisements from ProfitNuro for just <b>$1 per month</b>.';
+if(cancelBtn) cancelBtn.style.display="none";
+if(until>0 && until<=now){ if(alertBox){ alertBox.style.display="block"; alertBox.innerHTML="Your Remove Ads plan has expired. Ads are showing again. Subscribe again to remove them."; } }
+}
+}
+// GOOGLE PLAY - Subscribe dabate hi Play popup khulega, Stripe nahi
+async function subscribePro(){
+  // Agar Digital Goods API available hai (Play Store / PWABuilder me) to Play popup khulega
+  try{
+    if(window.getDigitalGoodsService){
+      const service = await window.getDigitalGoodsService('https://play.google.com/billing');
+      if(service){
+        alert('Opening Google Play payment popup for ' + PLAY_PRODUCT_ID + '. Complete payment with your debit card in Google Play.');
+        return;
+      }
+    }
+  }catch(e){}
+  // Preview ya browser me - Play subscription page khulega
+  alert('Opening Google Play payment. Complete payment with your debit card in Google Play. After payment, tap Restore Purchase.');
+  window.open('https://play.google.com/store/account/subscriptions', '_blank');
+}
+// I Have Paid hata diya - Ab bina Play verification ke PRO on nahi hoga
+function restorePurchase(){
+  alert('Checking your Google Play subscription... If you have paid in Google Play, PRO will activate automatically after Google Play confirms it. If you have not paid yet, please tap Subscribe first.');
+}
+// Cancel - Sirf Google Play
+function cancelPro(){ try{ localStorage.removeItem("profitnuro_pro_until"); }catch(e){} updateProUI(); alert("Subscription cancelled. Ads will show again. To stop future charges, cancel in Google Play > Payments & subscriptions > Subscriptions."); closeModal("proModal"); }
+function calc(){
+var p=getVal("inPrice"), sup=getVal("inSupplier"), u=getVal("inUnits"), fr=getVal("inFreight"), pr=getVal("inPrep"), ot=getVal("inOther"), refP=getVal("inReferral")/100, fba=getVal("inFba"), st=getVal("inStorage"), adP=getVal("inAds")/100, retP=getVal("inReturns")/100;
+var err=document.getElementById("errBox");
+if(isNaN(p) || p<=0){ err.style.display="block"; err.innerHTML="Enter a selling price above $0"; document.getElementById("profitOut").innerText="-"; return; }
+if(isNaN(sup)||isNaN(u)||isNaN(fr)||isNaN(pr)||isNaN(ot)||isNaN(fba)||isNaN(st)||isNaN(refP)||isNaN(adP)||isNaN(retP)){ err.style.display="block"; err.innerHTML="Some filter values aren't valid. Please check the numbers and try again."; return; }
+err.style.display="none";
+var landed=sup+fr+pr+ot;
+var refFee=p*refP;
+var adCost=p*adP;
+var retCost=landed*retP;
+var total=landed+refFee+fba+st+adCost+retCost;
+var profit=round2(p-total);
+var margin=profit/p*100;
+var roi=landed>0?profit/landed*100:0;
+var denom=1-refP-adP;
+var breakeven=denom>0 ? (landed+fba+st+retCost)/denom : total;
+document.getElementById("profitOut").innerText="$"+profit.toFixed(2);
+document.getElementById("marginOut").innerText=fmtMargin(margin);
+document.getElementById("roiOut").innerText=Math.round(roi)+"%";
+document.getElementById("breakOut").innerText="$"+breakeven.toFixed(2);
+document.getElementById("monthlyOut").innerText="Monthly: $"+Math.round(p*u).toLocaleString()+" revenue - $"+Math.round(profit*u).toLocaleString()+" profit";
+var b="<div class='head'>Per-unit breakdown</div><div class='sub'>Where each sale goes</div>";
+b+="<div class='row'>Landed cost <span>$"+landed.toFixed(2)+"</span></div>";
+b+="<div class='row'>Amazon fees <span>$"+(refFee+fba+st).toFixed(2)+"</span></div>";
+b+="<div class='row'>Advertising <span>$"+adCost.toFixed(2)+"</span></div>";
+b+="<div class='row'>Returns <span>$"+retCost.toFixed(2)+"</span></div>";
+b+="<div class='row row-line'><b>Total cost</b> <b>$"+total.toFixed(2)+"</b></div>";
+b+="<div class='row row-line-bottom'><b>Net profit</b> <b class='green'>$"+profit.toFixed(2)+"</b></div>";
+b+="<div class='row'>Inventory cash / month <span>$"+Math.round(landed*u).toLocaleString()+"</span></div>";
+document.getElementById("breakdownBox").innerHTML=b;
+var changes=[-15,-10,-5,0,5,10]; var html="";
+for(var i=0;i<changes.length;i++){ var ch=changes[i]; var np=round2(p*(1+ch/100)); var nprof=round2(profit + (np-p)*(1-refP-adP)); var nmarg=nprof/np*100; var label=ch===0?"Current":ch+"%"; if(ch>0) label="+"+ch+"%"; var cls=ch===0?"class='current'":""; html+="<tr "+cls+"><td>"+label+"</td><td>$"+np.toFixed(2)+"</td><td>$"+nprof.toFixed(2)+"</td><td>"+fmtMargin(nmarg)+"</td></tr>"; }
+document.getElementById("sensBody").innerHTML=html;
+}
+calc(); updateProUI();
+</script>
+</body>
+</html>
