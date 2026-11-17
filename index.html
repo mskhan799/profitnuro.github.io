@@ -205,10 +205,14 @@ function closeWithAd(id){
   closeModal(id);
 }
 function getVal(id){ var v=document.getElementById(id).value; if(v===""||v===null) return NaN; return parseFloat(v); }
-function fmtMoney(v){ var a=Math.abs(v); if(v<0) return "-$"+a.toFixed(2); return "$"+a.toFixed(2); }
+// GENERAL FIX - Koi number hard-code nahi hai, har number ke liye cents me hisab hoga
+// Har dollar ko 100 se guna karke integer banate hain, taake 0.01 wali galti na aaye
+function toCents(v){ return Math.round(v*100); }
+function fromCents(c){ return c/100; }
+function round2(v){ return Math.round(v*100)/100; }
+function fmtMoney(v){ var sign=v<0?"-$":"$"; var a=Math.abs(v); return sign+a.toFixed(2); }
 function fmtMoneyClass(v){ return v<0 ? "red" : "green"; }
 function fmtMargin(m){ return (Math.round(m*10)/10).toFixed(1)+"%"; }
-function round2(v){ return Math.round((v+Number.EPSILON)*100)/100; }
 function toggleMenu(e){ e.stopPropagation(); var m=document.getElementById("menu"); m.style.display=m.style.display==="block"?"none":"block"; }
 function closeMenu(){ document.getElementById("menu").style.display="none"; }
 document.addEventListener("click",function(e){ closeMenu(); if(!e.target.closest(".field")){ if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); } });
@@ -268,9 +272,13 @@ var p=getVal("inPrice"), sup=getVal("inSupplier"), u=getVal("inUnits"), fr=getVa
 var err=document.getElementById("errBox");
 var breakdownBox=document.getElementById("breakdownBox");
 var sensBox=document.getElementById("sensitivityBox");
-if(pRaw==="" || isNaN(p) || p<=0){
+if(pRaw==="" || isNaN(p) || p<=0 || isNaN(sup) || isNaN(fr) || isNaN(pr) || isNaN(ot) || isNaN(fba) || isNaN(st) || isNaN(refP) || isNaN(adP) || isNaN(retP)){
   err.style.display="block";
-  err.innerHTML="Enter a selling price above $0";
+  if(pRaw==="" || isNaN(p) || p<=0){
+    err.innerHTML="Enter a selling price above $0";
+  } else {
+    err.innerHTML="⚠️ Some filter values aren't valid. Please check the numbers and try again.";
+  }
   document.getElementById("profitOut").innerText="-";
   document.getElementById("marginOut").innerText="-";
   document.getElementById("roiOut").innerText="-";
@@ -280,16 +288,25 @@ if(pRaw==="" || isNaN(p) || p<=0){
   if(sensBox) sensBox.style.display="none";
   return;
 }
-if(isNaN(sup)||isNaN(u)||isNaN(fr)||isNaN(pr)||isNaN(ot)||isNaN(fba)||isNaN(st)||isNaN(refP)||isNaN(adP)||isNaN(retP)){ err.style.display="block"; err.innerHTML="Some filter values aren't valid. Please check the numbers and try again."; return; }
 err.style.display="none";
 if(breakdownBox) breakdownBox.style.display="block";
 if(sensBox) sensBox.style.display="block";
-var landed=sup+fr+pr+ot;
-var refFee=p*refP;
-var adCost=p*adP;
-var retCost=landed*retP;
-var total=landed+refFee+fba+st+adCost+retCost;
-var profit=round2(p-total);
+// Sab hisab cents me - har number ke liye same formula
+var pC=toCents(p);
+var landedC=toCents(sup+fr+pr+ot);
+var refC=Math.round(pC*refP);
+var adC=Math.round(pC*adP);
+var retC=Math.round(landedC*retP);
+var fbaC=toCents(fba);
+var stC=toCents(st);
+var totalC=landedC+refC+fbaC+stC+adC+retC;
+var profitC=pC-totalC;
+var profit=fromCents(profitC);
+var landed=fromCents(landedC);
+var refFee=fromCents(refC);
+var adCost=fromCents(adC);
+var retCost=fromCents(retC);
+var total=fromCents(totalC);
 var margin=profit/p*100;
 var roi=landed>0?profit/landed*100:0;
 var denom=1-refP-adP;
@@ -300,18 +317,24 @@ profitEl.style.color= profit<0 ? "#ff8a8a" : "#ffffff";
 document.getElementById("marginOut").innerText=fmtMargin(margin);
 document.getElementById("roiOut").innerText=Math.round(roi)+"%";
 document.getElementById("breakOut").innerText="$"+breakeven.toFixed(2);
-document.getElementById("monthlyOut").innerText="Monthly: $"+Math.round(p*u).toLocaleString()+" revenue - $"+Math.round(profit*u).toLocaleString()+" profit";
+if(isNaN(u)){
+  document.getElementById("monthlyOut").innerText="Monthly: -";
+} else {
+  document.getElementById("monthlyOut").innerText="Monthly: $"+Math.round(p*u).toLocaleString()+" revenue - $"+Math.round(profit*u).toLocaleString()+" profit";
+}
 var b="<div class='head'><div class='icon'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><path d='M14 2v6h6M16 13H8M16 17H8M10 9H8'/></svg></div>Per-unit breakdown</div><div class='sub'>Where each sale goes</div>";
-b+="<div class='row'>Landed cost <span>$"+round2(landed).toFixed(2)+"</span></div>";
-b+="<div class='row'>Amazon fees <span>$"+round2(refFee+fba+st).toFixed(2)+"</span></div>";
-b+="<div class='row'>Advertising <span>$"+round2(adCost).toFixed(2)+"</span></div>";
-b+="<div class='row'>Returns <span>$"+round2(retCost).toFixed(2)+"</span></div>";
-b+="<div class='row row-line'><b>Total cost</b> <b>$"+round2(total).toFixed(2)+"</b></div>";
+b+="<div class='row'>Landed cost <span>$"+landed.toFixed(2)+"</span></div>";
+b+="<div class='row'>Amazon fees <span>$"+(refFee+fba+st).toFixed(2)+"</span></div>";
+b+="<div class='row'>Advertising <span>$"+adCost.toFixed(2)+"</span></div>";
+b+="<div class='row'>Returns <span>$"+retCost.toFixed(2)+"</span></div>";
+b+="<div class='row row-line'><b>Total cost</b> <b>$"+total.toFixed(2)+"</b></div>";
 b+="<div class='row row-line-bottom'><b>Net profit</b> <b class='"+fmtMoneyClass(profit)+"'>"+fmtMoney(profit)+"</b></div>";
-b+="<div class='row'>Inventory cash / month <span>$"+Math.round(landed*u).toLocaleString()+"</span></div>";
+if(!isNaN(u)){
+  b+="<div class='row'>Inventory cash / month <span>$"+Math.round(landed*u).toLocaleString()+"</span></div>";
+}
 document.getElementById("breakdownBox").innerHTML=b;
 var changes=[-15,-10,-5,0,5,10]; var html="";
-for(var i=0;i<changes.length;i++){ var ch=changes[i]; var np=p*(1+ch/100); var nRef=np*refP; var nAd=np*adP; var nTotal=landed+nRef+fba+st+nAd+retCost; var nprof=round2(np-nTotal); var nmarg=nprof/np*100; var label=ch===0?"Current":ch+"%"; if(ch>0) label="+"+ch+"%"; var cls=ch===0?"class='current'":""; html+="<tr "+cls+"><td>"+label+"</td><td>$"+round2(np).toFixed(2)+"</td><td class='"+fmtMoneyClass(nprof)+"'>"+fmtMoney(nprof)+"</td><td>"+fmtMargin(nmarg)+"</td></tr>"; }
+for(var i=0;i<changes.length;i++){ var ch=changes[i]; var np=p*(1+ch/100); var npC=toCents(np); var nRefC=Math.round(npC*refP); var nAdC=Math.round(npC*adP); var nTotalC=landedC+nRefC+fbaC+stC+nAdC+retC; var nprofC=npC-nTotalC; var nprof=fromCents(nprofC); var nmarg=nprof/np*100; var label=ch===0?"Current":ch+"%"; if(ch>0) label="+"+ch+"%"; var cls=ch===0?"class='current'":""; html+="<tr "+cls+"><td>"+label+"</td><td>$"+fromCents(npC).toFixed(2)+"</td><td class='"+fmtMoneyClass(nprof)+"'>"+fmtMoney(nprof)+"</td><td>"+fmtMargin(nmarg)+"</td></tr>"; }
 document.getElementById("sensBody").innerHTML=html;
 }
 calc(); updateProUI();
