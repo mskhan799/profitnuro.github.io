@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.profitnuro.app",
+        "sha256_cert_fingerprints": ["8E:19:97:22:E8:5C:EA:D0:B7:88:BC:F8:96:25:66:58:45:52:27:4B:FD:12:B1:E7:BB:35:BF:73:07:60:07:A8"]
+      }
+    }]
